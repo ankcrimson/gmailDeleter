@@ -167,7 +167,7 @@ public class Quickstart {
                 boolean deleted = false;
 
 //                Delete Promotions
-                if(currentMessage.getLabelIds().contains("CATEGORY_PROMOTIONS")){
+                if(currentMessage.getLabelIds().contains("CATEGORY_PROMOTIONS")||currentMessage.getLabelIds().contains("CATEGORY_SOCIAL")){
                     service.users().messages().delete(user, headerInfo.getId()).execute();
                     deleted=true;
                 }

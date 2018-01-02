@@ -10,7 +10,7 @@
                     <RollingFile name="Rolling-${sd:type}" fileName="log/output.log"
                                  filePattern="log/output-.%i.log.gz">
                         <PatternLayout>
-                            <pattern>%d %p %c{1.} [%t] %m%n</pattern>
+                            <pattern>%p %m%n</pattern>
                         </PatternLayout>
                         <SizeBasedTriggeringPolicy size="5MB"/>
                     </RollingFile>
