@@ -165,7 +165,7 @@ public class Quickstart {
 
                 for (final String badSender : badSenders) {
                     if (headerInfo.getFrom() != null && headerInfo.getFrom().contains(badSender)) {
-                        service.users().messages().delete(user, headerInfo.getId());
+                        service.users().messages().delete(user, headerInfo.getId()).execute();
                         deleted = true;
                     }
                 }
