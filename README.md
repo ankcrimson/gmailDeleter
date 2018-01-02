@@ -7,7 +7,7 @@
 * copy the client_secret.json into src/main/resources directory (note: you will have to rename the file)
 
 ## Run
- `gradle -q run`
+ `./gradlew -q run`
  
 ## Output
 * Contents: Deleted Email Details
