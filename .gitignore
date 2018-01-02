@@ -23,3 +23,9 @@ hs_err_pid*
 
 # client secret
 src/main/resources/client_secret.json
+*.json
+*secret.json
+build/*
+build/*
+.idea/*
+.gradle/*
