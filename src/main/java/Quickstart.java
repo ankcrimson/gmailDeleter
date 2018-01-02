@@ -145,6 +145,7 @@ public class Quickstart {
         String nextPageToken = listMessagesResponse.getNextPageToken();
         while (listMessagesResponse.getMessages().size() > 0) {
             for (final Message message : listMessagesResponse.getMessages()) {
+
                 final Message currentMessage = service.users().messages().get(user, message.getId()).execute();
                 final List<MessagePartHeader> headerList = currentMessage.getPayload().getHeaders();
                 final HeaderInfo headerInfo = new HeaderInfo();
@@ -161,17 +162,26 @@ public class Quickstart {
                     }
                 }
 
+
+
                 boolean deleted = false;
 
-                for (final String badSender : badSenders) {
-                    if (headerInfo.getFrom() != null && headerInfo.getFrom().contains(badSender)) {
-                        service.users().messages().delete(user, headerInfo.getId()).execute();
-                        deleted = true;
+//                Delete Promotions
+                if(currentMessage.getLabelIds().contains("CATEGORY_PROMOTIONS")){
+                    service.users().messages().delete(user, headerInfo.getId()).execute();
+                    deleted=true;
+                }
+                else {
+//                    Delete bad Senders
+                    for (final String badSender : badSenders) {
+                        if (headerInfo.getFrom() != null && headerInfo.getFrom().contains(badSender)) {
+                            service.users().messages().delete(user, headerInfo.getId()).execute();
+                            deleted = true;
+                        }
                     }
                 }
-
                 if (deleted) {
-                    log.info("Deleting Message: {}", headerInfo);
+                    log.info("Deleting Message: {} - {}",currentMessage.getLabelIds(), headerInfo);
                 } else {
 //                log.info("List: {}", headerInfo);
                 }
