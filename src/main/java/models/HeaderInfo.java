@@ -37,4 +37,14 @@ public class HeaderInfo {
     public void setDate(String date) {
         this.date = date;
     }
+
+    @Override
+    public String toString() {
+        return "HeaderInfo{" +
+                "id='" + id + '\'' +
+                ", from='" + from + '\'' +
+                ", subject='" + subject + '\'' +
+                ", date='" + date + '\'' +
+                '}';
+    }
 }
