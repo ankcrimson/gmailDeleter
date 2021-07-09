@@ -18,15 +18,13 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 
 //@Slf4j
 public class Quickstart {
     static final Logger log = LogManager.getLogger(Quickstart.class.getName());
+    static final String sendersPath = Paths.get("log", "popularSenders.txt").toString();
     /**
      * Application name.
      */
@@ -113,7 +111,7 @@ public class Quickstart {
         log.info("STARTING----");
         // Populate Bad Senders
         final Set<String> badSenders = getBadSenders();
-
+        final Map<String, Integer> popularSenders = new HashMap<>();
         // Build a new authorized API client service.
         final Gmail service = getGmailService();
 
@@ -141,6 +139,11 @@ public class Quickstart {
                     runningCount++;
                     if (runningCount % 100 == 0) {
                         log.info("event=msgsRead count={}", runningCount);
+                        try (final BufferedWriter bw = new BufferedWriter(new FileWriter(sendersPath))) {
+                            bw.write(popularSenders.toString());
+                        } catch (final Exception ex) {
+                            log.error("event=errorUpdatingPopularSenders", ex);
+                        }
                     }
                     final Message currentMessage = service.users().messages().get(user, message.getId()).execute();
                     final List<MessagePartHeader> headerList = currentMessage.getPayload().getHeaders();
@@ -159,6 +162,9 @@ public class Quickstart {
                     }
                     final String from = getFrom(headerInfo);
                     log.info("event=from from={}", from);
+
+                    //update popular senders
+                    popularSenders.put(from, popularSenders.getOrDefault(from, 0) + 1);
 
 //                Delete Promotions
                     if (currentMessage.getLabelIds().contains("CATEGORY_PROMOTIONS") || currentMessage.getLabelIds().contains("CATEGORY_SOCIAL")) {
