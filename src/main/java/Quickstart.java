@@ -6,7 +6,7 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.GmailScopes;
@@ -53,7 +53,7 @@ public class Quickstart {
      * Global instance of the JSON factory.
      */
     private static final JsonFactory JSON_FACTORY =
-        JacksonFactory.getDefaultInstance();
+        GsonFactory.getDefaultInstance();
 
     /**
      * Global instance of the HTTP transport.
@@ -88,7 +88,7 @@ public class Quickstart {
     public static Credential authorize() throws IOException {
         // Load client secrets.
         final InputStream in =
-            Quickstart.class.getResourceAsStream("/client_secret.json");
+            Quickstart.class.getResourceAsStream("~/Downloads/client_secret.json");
         final GoogleClientSecrets clientSecrets =
             GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
 
@@ -120,7 +120,7 @@ public class Quickstart {
     }
 
     public static void main(final String[] args) throws IOException {
-
+        log.info("STARTING----");
         // Populate Bad Senders
         final Set<String> badSenders = getBadSenders();
 
