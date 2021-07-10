@@ -18,6 +18,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.*;
 
 
@@ -117,8 +118,7 @@ public class Quickstart {
 
         // Print the labels in the user's account.
         final String user = "me";
-        final ListLabelsResponse listResponse =
-                service.users().labels().list(user).execute();
+        final ListLabelsResponse listResponse = service.users().labels().list(user).execute();
         final List<Label> labels = listResponse.getLabels();
         if (labels.size() == 0) {
             System.out.println("No labels found.");
@@ -129,67 +129,74 @@ public class Quickstart {
             }
         }
 
-        ListMessagesResponse listMessagesResponse = service.users().messages().list(user).execute();
+        ListMessagesResponse listMessagesResponse = service.users().messages().list(user).setMaxResults(500L).execute();
         String nextPageToken = listMessagesResponse.getNextPageToken();
-
-        long runningCount = 0;
+        int total = 0;
+        long start = Instant.now().toEpochMilli();
         while (listMessagesResponse.getMessages().size() > 0) {
-            for (final Message message : listMessagesResponse.getMessages()) {
-                try {
-                    runningCount++;
-                    if (runningCount % 500 == 0) {
-                        log.info("event=msgsRead count={}", runningCount);
-                        try (final BufferedWriter bw = new BufferedWriter(new FileWriter(sendersPath))) {
-                            bw.write("email,count\n");
-                            for (final Map.Entry<String, Integer> e : popularSenders.entrySet()) {
-                                bw.write(e.getKey() + "," + e.getValue() + "\n");
+            final long newTime = Instant.now().toEpochMilli();
+            log.info("event=processed msgs={} timeTaken={} sec", total, (newTime - start) / 1000);
+            start = newTime;
+            total += listMessagesResponse.getMessages().size();
+            listMessagesResponse.getMessages().parallelStream().forEach(
+                    message -> {
+                        if ((int) (Math.random() * 100) == 15) {
+                            try (final BufferedWriter bw = new BufferedWriter(new FileWriter(sendersPath))) {
+                                bw.write("email,count\n");
+                                for (final Map.Entry<String, Integer> e : popularSenders.entrySet()) {
+                                    bw.write(e.getKey() + "," + e.getValue() + "\n");
+                                }
+                            } catch (final Exception ex) {
+                                log.error("event=errorUpdatingPopularSenders", ex);
                             }
-                        } catch (final Exception ex) {
-                            log.error("event=errorUpdatingPopularSenders", ex);
                         }
+                        processGivenMessage(badSenders, popularSenders, service, user, message);
                     }
-                    final Message currentMessage = service.users().messages().get(user, message.getId()).execute();
-                    final List<MessagePartHeader> headerList = currentMessage.getPayload().getHeaders();
-                    final HeaderInfo headerInfo = new HeaderInfo();
-                    headerInfo.setId(currentMessage.getId());
-                    for (final MessagePartHeader header : headerList) {
-                        if ("Subject".equals(header.getName())) {
-                            headerInfo.setSubject(header.getValue());
-                        }
-                        if ("From".equals(header.getName())) {
-                            headerInfo.setFrom(header.getValue());
-                        }
-                        if ("Date".equals(header.getName())) {
-                            headerInfo.setDate(header.getValue());
-                        }
-                    }
-                    final String from = getFrom(headerInfo);
-                    log.info("event=from from={}", from);
-
-                    //update popular senders
-                    popularSenders.put(from, popularSenders.getOrDefault(from, 0) + 1);
-
-//                Delete Promotions
-                    if (currentMessage.getLabelIds().contains("CATEGORY_PROMOTIONS") || currentMessage.getLabelIds().contains("CATEGORY_SOCIAL")) {
-                        service.users().messages().delete(user, headerInfo.getId()).execute();
-                        writeToFileAndLog("bad_category", from, currentMessage, headerInfo);
-
-                    } else {
-//                    Delete bad Senders
-                        if (badSenders.contains(from)) {
-                            service.users().messages().delete(user, headerInfo.getId()).execute();
-                            writeToFileAndLog("bad_sender", from, currentMessage, headerInfo);
-                        }
-                    }
-                } catch (final Exception ex) {
-                    log.error("event=errorInProcess", ex);
-                }
-
-            }
-            listMessagesResponse = service.users().messages().list(user).setPageToken(nextPageToken).execute();
+            );
+            listMessagesResponse = service.users().messages().list(user).setPageToken(nextPageToken).setMaxResults(500L).execute();
             nextPageToken = listMessagesResponse.getNextPageToken();
         }
 
+    }
+
+    private static void processGivenMessage(final Set<String> badSenders, final Map<String, Integer> popularSenders, final Gmail service, final String user, final Message message) {
+        try {
+            final Message currentMessage = service.users().messages().get(user, message.getId()).execute();
+            final List<MessagePartHeader> headerList = currentMessage.getPayload().getHeaders();
+            final HeaderInfo headerInfo = new HeaderInfo();
+            headerInfo.setId(currentMessage.getId());
+            for (final MessagePartHeader header : headerList) {
+                if ("Subject".equals(header.getName())) {
+                    headerInfo.setSubject(header.getValue());
+                }
+                if ("From".equals(header.getName())) {
+                    headerInfo.setFrom(header.getValue());
+                }
+                if ("Date".equals(header.getName())) {
+                    headerInfo.setDate(header.getValue());
+                }
+            }
+            final String from = getFrom(headerInfo);
+//            log.info("event=from from={}", from);
+
+            //update popular senders
+            popularSenders.put(from, popularSenders.getOrDefault(from, 0) + 1);
+
+//                Delete Promotions
+            if (currentMessage.getLabelIds().contains("CATEGORY_PROMOTIONS") || currentMessage.getLabelIds().contains("CATEGORY_SOCIAL")) {
+//                        service.users().messages().delete(user, headerInfo.getId()).execute();
+                writeToFileAndLog("bad_category", from, currentMessage, headerInfo);
+
+            } else {
+//                    Delete bad Senders
+                if (badSenders.contains(from)) {
+//                            service.users().messages().delete(user, headerInfo.getId()).execute();
+                    writeToFileAndLog("bad_sender", from, currentMessage, headerInfo);
+                }
+            }
+        } catch (final Exception ex) {
+            log.error("event=errorInProcess", ex);
+        }
     }
 
 
@@ -197,7 +204,7 @@ public class Quickstart {
 
         log.info("event=Deleting reason={} from={} labels={} details={}", reason, from, currentMessage.getLabelIds(), headerInfo);
         final String filePath = Paths.get("log", "Emails", String.format("%s_%s_%s.txt", reason, from, headerInfo.getDate())).toString();
-        log.info("event=FilePath path={}", filePath);
+//        log.info("event=FilePath path={}", filePath);
         try (final BufferedWriter bw = new BufferedWriter(new FileWriter(filePath))) {
             bw.write(headerInfo.getSubject());
             bw.write("\n");
