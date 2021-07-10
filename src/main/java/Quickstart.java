@@ -20,6 +20,7 @@ import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 //@Slf4j
@@ -31,7 +32,6 @@ public class Quickstart {
      */
     private static final String APPLICATION_NAME =
             "Gmail API Java Quickstart";
-
     /**
      * Directory to store user credentials for this application.
      */
@@ -50,6 +50,7 @@ public class Quickstart {
      */
     private static final List<String> SCOPES =
             Arrays.asList(GmailScopes.MAIL_GOOGLE_COM);
+    static AtomicInteger deleted = new AtomicInteger(0);
     /**
      * Global instance of the {@link FileDataStoreFactory}.
      */
@@ -195,12 +196,15 @@ public class Quickstart {
 //                Delete Promotions
             if (currentMessage.getLabelIds().contains("CATEGORY_PROMOTIONS") || currentMessage.getLabelIds().contains("CATEGORY_SOCIAL")) {
                 service.users().messages().delete(user, headerInfo.getId()).execute();
+                deleted.addAndGet(1);
                 writeToFileAndLog("bad_category", from, currentMessage, headerInfo);
 
             } else {
 //                    Delete bad Senders
                 if (badSenders.contains(from)) {
+
                     service.users().messages().delete(user, headerInfo.getId()).execute();
+                    deleted.addAndGet(1);
                     writeToFileAndLog("bad_sender", from, currentMessage, headerInfo);
                 }
             }
@@ -212,7 +216,7 @@ public class Quickstart {
 
     private static void writeToFileAndLog(final String reason, final String from, final Message currentMessage, final HeaderInfo headerInfo) {
 
-        log.info("event=Deleting reason={} from={} labels={} details={}", reason, from, currentMessage.getLabelIds(), headerInfo);
+        log.info("event=Deleting total={} reason={} from={} labels={} details={}", deleted.get(), reason, from, currentMessage.getLabelIds(), headerInfo);
 //        final String filePath = Paths.get("log", "Emails", String.format("%s_%s_%s.txt", reason, from, headerInfo.getDate())).toString();
 //        log.info("event=FilePath path={}", filePath);
 //        try (final BufferedWriter bw = new BufferedWriter(new FileWriter(filePath))) {
