@@ -20,4 +20,14 @@ support@cleartax.in
 calendar-notification@google.com
 info@realpython.com
 messaging-digest-noreply@linkedin.com
-
+technews@techgig.com
+noreply@redditmail.com
+digital-noreply@amazon.com
+info@meetup.com
+noreply@updates.freelancer.com
+ramit.sethi@iwillteachyoutoberich.com
+eugen@baeldung.com
+newsletter@etcio.com
+nytdirect@nytimes.com
+venmo@venmo.com
+support@leafly.com
