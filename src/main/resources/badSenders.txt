@@ -14,3 +14,5 @@ notification@freetalkie.com
 kd@kochdavisjobs.com
 noreply@robinhood.com
 no-reply@curiositystream.com
+aws-marketing-email-replies@amazon.com
+publishing@email.mckinsey.com
