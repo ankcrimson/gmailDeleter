@@ -16,3 +16,8 @@ noreply@robinhood.com
 no-reply@curiositystream.com
 aws-marketing-email-replies@amazon.com
 publishing@email.mckinsey.com
+support@cleartax.in
+calendar-notification@google.com
+info@realpython.com
+messaging-digest-noreply@linkedin.com
+
