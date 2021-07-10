@@ -137,10 +137,13 @@ public class Quickstart {
             for (final Message message : listMessagesResponse.getMessages()) {
                 try {
                     runningCount++;
-                    if (runningCount % 100 == 0) {
+                    if (runningCount % 500 == 0) {
                         log.info("event=msgsRead count={}", runningCount);
                         try (final BufferedWriter bw = new BufferedWriter(new FileWriter(sendersPath))) {
-                            bw.write(popularSenders.toString());
+                            bw.write("email,count\n");
+                            for (final Map.Entry<String, Integer> e : popularSenders.entrySet()) {
+                                bw.write(e.getKey() + "," + e.getValue() + "\n");
+                            }
                         } catch (final Exception ex) {
                             log.error("event=errorUpdatingPopularSenders", ex);
                         }
