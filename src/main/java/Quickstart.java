@@ -12,7 +12,6 @@ import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.GmailScopes;
 import com.google.api.services.gmail.model.*;
 import models.HeaderInfo;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -195,13 +194,13 @@ public class Quickstart {
 
 //                Delete Promotions
             if (currentMessage.getLabelIds().contains("CATEGORY_PROMOTIONS") || currentMessage.getLabelIds().contains("CATEGORY_SOCIAL")) {
-//                        service.users().messages().delete(user, headerInfo.getId()).execute();
+                service.users().messages().delete(user, headerInfo.getId()).execute();
                 writeToFileAndLog("bad_category", from, currentMessage, headerInfo);
 
             } else {
 //                    Delete bad Senders
                 if (badSenders.contains(from)) {
-//                            service.users().messages().delete(user, headerInfo.getId()).execute();
+                    service.users().messages().delete(user, headerInfo.getId()).execute();
                     writeToFileAndLog("bad_sender", from, currentMessage, headerInfo);
                 }
             }
@@ -214,17 +213,17 @@ public class Quickstart {
     private static void writeToFileAndLog(final String reason, final String from, final Message currentMessage, final HeaderInfo headerInfo) {
 
         log.info("event=Deleting reason={} from={} labels={} details={}", reason, from, currentMessage.getLabelIds(), headerInfo);
-        final String filePath = Paths.get("log", "Emails", String.format("%s_%s_%s.txt", reason, from, headerInfo.getDate())).toString();
+//        final String filePath = Paths.get("log", "Emails", String.format("%s_%s_%s.txt", reason, from, headerInfo.getDate())).toString();
 //        log.info("event=FilePath path={}", filePath);
-        try (final BufferedWriter bw = new BufferedWriter(new FileWriter(filePath))) {
-            bw.write(headerInfo.getSubject());
-            bw.write("\n");
-            if (currentMessage.getPayload() != null && currentMessage.getPayload().getBody() != null && currentMessage.getPayload().getBody().getData() != null) {
-                bw.write(new String(Base64.decodeBase64(currentMessage.getPayload().getBody().getData())));
-            }
-        } catch (final Exception ex) {
-            log.error("event=errorWritingToFile", ex);
-        }
+//        try (final BufferedWriter bw = new BufferedWriter(new FileWriter(filePath))) {
+//            bw.write(headerInfo.getSubject());
+//            bw.write("\n");
+//            if (currentMessage.getPayload() != null && currentMessage.getPayload().getBody() != null && currentMessage.getPayload().getBody().getData() != null) {
+//                bw.write(new String(Base64.decodeBase64(currentMessage.getPayload().getBody().getData())));
+//            }
+//        } catch (final Exception ex) {
+//            log.error("event=errorWritingToFile", ex);
+//        }
     }
 
     private static String getFrom(final HeaderInfo headerInfo) {
