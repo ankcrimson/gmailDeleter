@@ -20,12 +20,13 @@ import java.io.*;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 
 //@Slf4j
 public class Quickstart {
     static final Logger log = LogManager.getLogger(Quickstart.class.getName());
-    static final String sendersPath = Paths.get("log", "popularSenders.txt").toString();
+    static final String sendersPath = Paths.get("log", "popularSenders.csv").toString();
     /**
      * Application name.
      */
@@ -134,27 +135,37 @@ public class Quickstart {
         int total = 0;
         long start = Instant.now().toEpochMilli();
         while (listMessagesResponse.getMessages().size() > 0) {
-            final long newTime = Instant.now().toEpochMilli();
-            log.info("event=processed msgs={} timeTaken={} sec", total, (newTime - start) / 1000);
-            start = newTime;
-            total += listMessagesResponse.getMessages().size();
-            listMessagesResponse.getMessages().parallelStream().forEach(
-                    message -> {
-                        if ((int) (Math.random() * 100) == 15) {
-                            try (final BufferedWriter bw = new BufferedWriter(new FileWriter(sendersPath))) {
-                                bw.write("email,count\n");
-                                for (final Map.Entry<String, Integer> e : popularSenders.entrySet()) {
-                                    bw.write(e.getKey() + "," + e.getValue() + "\n");
+            try {
+                final long newTime = Instant.now().toEpochMilli();
+                log.info("event=processed msgs={} timeTaken={} sec", total, (newTime - start) / 1000);
+                start = newTime;
+                total += listMessagesResponse.getMessages().size();
+                listMessagesResponse.getMessages().parallelStream().forEach(
+                        message -> {
+                            if ((int) (Math.random() * 100) == 15) {
+                                try (final BufferedWriter bw = new BufferedWriter(new FileWriter(sendersPath))) {
+                                    bw.write("email,count\n");
+                                    for (final Map.Entry<String, Integer> e : popularSenders.entrySet()) {
+                                        bw.write(e.getKey() + "," + e.getValue() + "\n");
+                                    }
+                                } catch (final Exception ex) {
+                                    log.error("event=errorUpdatingPopularSenders", ex);
                                 }
-                            } catch (final Exception ex) {
-                                log.error("event=errorUpdatingPopularSenders", ex);
                             }
+                            processGivenMessage(badSenders, popularSenders, service, user, message);
                         }
-                        processGivenMessage(badSenders, popularSenders, service, user, message);
-                    }
-            );
-            listMessagesResponse = service.users().messages().list(user).setPageToken(nextPageToken).setMaxResults(500L).execute();
-            nextPageToken = listMessagesResponse.getNextPageToken();
+                );
+                listMessagesResponse = service.users().messages().list(user).setPageToken(nextPageToken).setMaxResults(500L).execute();
+                nextPageToken = listMessagesResponse.getNextPageToken();
+            } catch (final Exception ex) {
+                log.error("event=errorOccured", ex);
+                try {
+                    TimeUnit.SECONDS.sleep(5);
+                } catch (final Exception ex2) {
+                    log.error("event=Interrupted", ex2);
+                }
+            }
+
         }
 
     }
