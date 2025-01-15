@@ -12,3 +12,5 @@
 ## Output
 * Contents: Deleted Email Details
 * Location: log/output.log
+
+last used 2024
